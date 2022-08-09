@@ -3,14 +3,11 @@ ARG GO_IMAGE=rancher/hardened-build-base:v1.16.10b7
 FROM ${BCI_IMAGE} as bci
 FROM ${GO_IMAGE} as builder
 # setup required packages
-RUN set -x && \
-    apk --no-cache add \
-    file \
-    gcc \
-    git \
-    libselinux-dev \
-    libseccomp-dev \
-    make
+RUN zypper update -y && \
+    zypper --non-interactive install \
+        unzip \
+        libselinux-devel \
+        libseccomp-devel
 # setup the build
 ARG PKG=go.etcd.io/etcd
 ARG SRC=github.com/k3s-io/etcd
@@ -20,6 +17,7 @@ RUN git clone --depth=1 https://${SRC}.git $GOPATH/src/${PKG}
 WORKDIR $GOPATH/src/${PKG}
 RUN git fetch --all --tags --prune
 RUN git checkout tags/${TAG} -b ${TAG}
+ENV CC=/usr/local/musl/bin/musl-gcc
 # build and assert statically linked executable(s)
 RUN go mod vendor && \
     export GO_LDFLAGS="-linkmode=external -X ${PKG}/version.GitSHA=$(git rev-parse --short HEAD)" && \
