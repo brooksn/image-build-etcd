@@ -9,6 +9,8 @@ ORG ?= rancher
 PKG ?= go.etcd.io/etcd
 SRC ?= github.com/k3s-io/etcd
 TAG ?= v3.5.0-k3s2$(BUILD_META)
+CREATED ?= $(shell date --iso-8601=s -u)
+REF ?= $(shell git symbolic-ref HEAD)
 
 ifneq ($(DRONE_TAG),)
 TAG := $(DRONE_TAG)
@@ -21,12 +23,15 @@ endif
 .PHONY: image-build
 image-build:
 	docker build \
-	  --pull \
 		--build-arg PKG=$(PKG) \
 		--build-arg SRC=$(SRC) \
 		--build-arg TAG=$(TAG:$(BUILD_META)=) \
 		--build-arg ARCH=$(ARCH) \
 		--build-arg ETCD_UNSUPPORTED_ARCH=$(ETCD_UNSUPPORTED_ARCH) \
+		--label "org.opencontainers.image.url=https://github.com/brooksn/image-build-etcd" \
+		--label "org.opencontainers.image.created=$(CREATED)" \
+		--label "org.opencontainers.image.authors=brooksn" \
+		--label "org.opencontainers.image.ref.name=$(REF)" \
 		--tag $(ORG)/hardened-etcd:$(TAG) \
 		--tag $(ORG)/hardened-etcd:$(TAG)-$(ARCH) \
 	.
